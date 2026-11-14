@@ -27,6 +27,24 @@ class GAM415_PROJECT_API AShooterProjectile : public AActor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UProjectileMovementComponent* ProjectileMovement;
 
+
+	//creates mesh component for the projectile
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+
+	//creates material component for the projectile
+	UPROPERTY(EditAnywhere)
+	UMaterial* BaseMaterial;
+
+	UPROPERTY()
+	FLinearColor randColor;
+
+	UPROPERTY(EditAnywhere)
+	UMaterialInterface* projMat;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* dmiMat;
+
 protected:
 
 	/** Loudness of the AI perception noise done by this projectile on hit */

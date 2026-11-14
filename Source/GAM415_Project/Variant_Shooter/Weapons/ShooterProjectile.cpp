@@ -11,6 +11,9 @@
 #include "GameFramework/Controller.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Components/DecalComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
 AShooterProjectile::AShooterProjectile()
@@ -20,10 +23,13 @@ AShooterProjectile::AShooterProjectile()
 	// create the collision component and assign it as the root
 	RootComponent = CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Component"));
 
-	CollisionComponent->SetSphereRadius(16.0f);
+	CollisionComponent->SetSphereRadius(5.0f);
 	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Block);
 	CollisionComponent->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+
+	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Projectile Mesh"));
+	ProjectileMesh->SetupAttachment(CollisionComponent);
 
 	// create the projectile movement component. No need to attach it because it's not a Scene Component
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement"));
@@ -42,6 +48,13 @@ void AShooterProjectile::BeginPlay()
 	
 	// ignore the pawn that shot this projectile
 	CollisionComponent->IgnoreActorWhenMoving(GetInstigator(), true);
+
+	randColor = FLinearColor(UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), 1.0f);
+
+	dmiMat = UMaterialInstanceDynamic::Create(projMat, this);
+	ProjectileMesh->SetMaterial(0, dmiMat);
+
+	dmiMat->SetVectorParameterValue(FName("ProjectileColor"), randColor);
 }
 
 void AShooterProjectile::EndPlay(EEndPlayReason::Type EndPlayReason)
@@ -157,6 +170,17 @@ void AShooterProjectile::ProcessHit(AActor* HitActor, UPrimitiveComponent* HitCo
 	{
 		// give some physics impulse to the object
 		HitComp->AddImpulseAtLocation(HitDirection * PhysicsForce, HitLocation);
+	}
+
+	if (HitComp != nullptr)
+	{
+		float frameNum = UKismetMathLibrary::RandomFloatInRange(0.0f, 3.0f);
+
+		auto DecalMaterial = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BaseMaterial, FVector(UKismetMathLibrary::RandomFloatInRange(20.0f, 40.0f)), HitLocation, HitLocation.Rotation(), 0.0f);
+		auto MatInstance = DecalMaterial->CreateDynamicMaterialInstance();
+
+		MatInstance->SetVectorParameterValue(FName("Color"), randColor);
+		MatInstance->SetScalarParameterValue(FName("Frame"), frameNum);
 	}
 }
 

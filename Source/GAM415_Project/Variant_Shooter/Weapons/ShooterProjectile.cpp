@@ -13,7 +13,6 @@
 #include "Engine/World.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/DecalComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
 AShooterProjectile::AShooterProjectile()
@@ -37,6 +36,8 @@ AShooterProjectile::AShooterProjectile()
 	ProjectileMovement->InitialSpeed = 3000.0f;
 	ProjectileMovement->MaxSpeed = 3000.0f;
 	ProjectileMovement->bShouldBounce = true;
+	ProjectileMovement->Bounciness = 0.6f;
+	ProjectileMovement->Friction = 0.2f;
 
 	// set the default damage type
 	HitDamageType = UDamageType::StaticClass();
@@ -49,12 +50,15 @@ void AShooterProjectile::BeginPlay()
 	// ignore the pawn that shot this projectile
 	CollisionComponent->IgnoreActorWhenMoving(GetInstigator(), true);
 
-	randColor = FLinearColor(UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), 1.0f);
+	if (CollisionComponent != nullptr)
+	{
+		randColor = FLinearColor(UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f), 1.0f);
 
-	dmiMat = UMaterialInstanceDynamic::Create(projMat, this);
-	ProjectileMesh->SetMaterial(0, dmiMat);
+		dmiMat = UMaterialInstanceDynamic::Create(projMat, this);
+		ProjectileMesh->SetMaterial(0, dmiMat);
 
-	dmiMat->SetVectorParameterValue(FName("ProjectileColor"), randColor);
+		dmiMat->SetVectorParameterValue(FName("ProjectileColor"), randColor);
+	}
 }
 
 void AShooterProjectile::EndPlay(EEndPlayReason::Type EndPlayReason)
@@ -75,9 +79,6 @@ void AShooterProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Ot
 
 	bHit = true;
 
-	// disable collision on the projectile
-	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	// make AI perception noise
 	MakeNoise(NoiseLoudness, GetInstigator(), GetActorLocation(), NoiseRange, NoiseTag);
 
@@ -90,7 +91,7 @@ void AShooterProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Ot
 	} else {
 
 		// single hit projectile. Process the collided actor
-		ProcessHit(Other, OtherComp, Hit.ImpactPoint, -Hit.ImpactNormal);
+		ProcessHit(Other, OtherComp, Hit.ImpactPoint, Hit.ImpactNormal);
 
 	}
 
@@ -165,23 +166,22 @@ void AShooterProjectile::ProcessHit(AActor* HitActor, UPrimitiveComponent* HitCo
 		}
 	}
 
-	// have we hit a physics object?
-	if (HitComp->IsSimulatingPhysics())
+	if (HitActor != nullptr)
 	{
-		// give some physics impulse to the object
-		HitComp->AddImpulseAtLocation(HitDirection * PhysicsForce, HitLocation);
-	}
-
-	if (HitComp != nullptr)
-	{
+		//sets a random frame number for the decal material to use
 		float frameNum = UKismetMathLibrary::RandomFloatInRange(0.0f, 3.0f);
 
-		auto DecalMaterial = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BaseMaterial, FVector(UKismetMathLibrary::RandomFloatInRange(20.0f, 40.0f)), HitLocation, HitLocation.Rotation(), 0.0f);
-		auto MatInstance = DecalMaterial->CreateDynamicMaterialInstance();
+		//spawn a decal at the hit location
+		auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), BaseMaterial, FVector(UKismetMathLibrary::RandomFloatInRange(20.0f, 40.0f)), HitLocation, HitDirection.Rotation(), 0.0f);
+		if (Decal != nullptr)
+		{
+			auto MatInstance = Decal->CreateDynamicMaterialInstance();
 
-		MatInstance->SetVectorParameterValue(FName("Color"), randColor);
-		MatInstance->SetScalarParameterValue(FName("Frame"), frameNum);
+			MatInstance->SetVectorParameterValue("Color", randColor);
+			MatInstance->SetScalarParameterValue("Frame", frameNum);
+		}
 	}
+
 }
 
 void AShooterProjectile::OnDeferredDestruction()

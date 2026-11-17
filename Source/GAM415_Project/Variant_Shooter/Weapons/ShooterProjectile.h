@@ -36,6 +36,7 @@ class GAM415_PROJECT_API AShooterProjectile : public AActor
 	UPROPERTY(EditAnywhere)
 	UMaterial* BaseMaterial;
 
+	//holds a random color for the projectile
 	UPROPERTY()
 	FLinearColor randColor;
 

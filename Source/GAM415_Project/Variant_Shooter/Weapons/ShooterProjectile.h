@@ -9,6 +9,7 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 class ACharacter;
+class UNiagaraSystem;
 class UPrimitiveComponent;
 
 /**
@@ -28,23 +29,28 @@ class GAM415_PROJECT_API AShooterProjectile : public AActor
 	UProjectileMovementComponent* ProjectileMovement;
 
 
-	//creates mesh component for the projectile
+	//create mesh component for the projectile
 	UPROPERTY(EditAnywhere)
 	UStaticMeshComponent* ProjectileMesh;
 
-	//creates material component for the projectile
+	//create material component for the projectile
 	UPROPERTY(EditAnywhere)
 	UMaterial* BaseMaterial;
 
-	//holds a random color for the projectile
+	//hold a random color for the projectile
 	UPROPERTY()
 	FLinearColor randColor;
 
+	//create material interface for projectile
 	UPROPERTY(EditAnywhere)
 	UMaterialInterface* projMat;
 
+	//create dynamic material instance
 	UPROPERTY()
 	UMaterialInstanceDynamic* dmiMat;
+
+	UPROPERTY(EditAnywhere)
+	UNiagaraSystem* colorP;
 
 protected:
 

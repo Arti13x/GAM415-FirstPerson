@@ -14,6 +14,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/DecalComponent.h"
 #include "TimerManager.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 AShooterProjectile::AShooterProjectile()
 {
@@ -168,6 +170,15 @@ void AShooterProjectile::ProcessHit(AActor* HitActor, UPrimitiveComponent* HitCo
 
 	if (HitActor != nullptr)
 	{
+
+		if (colorP)
+		{
+			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(colorP, HitComp, NAME_None, FVector(-20.0f, 0.0f, 0.0f), FRotator(0.0f), EAttachLocation::KeepRelativeOffset, true);
+			particleComp->SetNiagaraVariableLinearColor(FString("RandomColor"), randColor);
+			ProjectileMesh->DestroyComponent();
+			CollisionComponent->BodyInstance.SetCollisionProfileName("NoCollision");
+		}
+
 		//sets a random frame number for the decal material to use
 		float frameNum = UKismetMathLibrary::RandomFloatInRange(0.0f, 3.0f);
 

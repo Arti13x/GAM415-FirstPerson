@@ -173,7 +173,7 @@ void AShooterProjectile::ProcessHit(AActor* HitActor, UPrimitiveComponent* HitCo
 
 		if (colorP)
 		{
-			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(colorP, HitComp, NAME_None, FVector(-20.0f, 0.0f, 0.0f), FRotator(0.0f), EAttachLocation::KeepRelativeOffset, true);
+			UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), colorP, GetActorLocation(), GetActorRotation());
 			particleComp->SetNiagaraVariableLinearColor(FString("RandomColor"), randColor);
 			ProjectileMesh->DestroyComponent();
 			CollisionComponent->BodyInstance.SetCollisionProfileName("NoCollision");
